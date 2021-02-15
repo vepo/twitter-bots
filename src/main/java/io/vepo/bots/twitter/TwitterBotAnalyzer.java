@@ -1,12 +1,21 @@
 package io.vepo.bots.twitter;
 
-import java.util.Comparator;
+import static java.util.stream.Collectors.toSet;
+
 import java.util.HashMap;
 import java.util.Map.Entry;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import io.vepo.twitter4j.Rule;
 import io.vepo.twitter4j.Rule.Language;
 import io.vepo.twitter4j.TwitterClient;
+import io.vepo.twitter4j.TwitterClient.Expansions;
+import io.vepo.twitter4j.TwitterClient.MediaFields;
+import io.vepo.twitter4j.TwitterClient.PlaceFields;
+import io.vepo.twitter4j.TwitterClient.PollFields;
+import io.vepo.twitter4j.TwitterClient.TweetFields;
+import io.vepo.twitter4j.TwitterClient.UserFields;
 
 public class TwitterBotAnalyzer {
     public static void main(String[] args) throws Exception {
@@ -17,15 +26,23 @@ public class TwitterBotAnalyzer {
         var nextsWords = new HashMap<String, Integer>();
         tClient.authenticate()
                .stream()
-               .with(Rule.builder()
-                         .withLanguage(Language.Portuguese)
-                         .withToken("bolsonaro")
-                         .applyTag("Bolsonaro Tweets"))
+               .withRule(Rule.builder()
+                             .withLanguage(Language.Portuguese)
+//                         .withToken("java")
+                             .withToken("bolsonaro")
+                             .withLinks()
+                             .applyTag("Bolsonaro"))
+               .requestExpansions(Stream.of(Expansions.values()).collect(toSet()))
+               .requestMediaFields(Stream.of(MediaFields.values()).collect(toSet()))
+               .requestPlaceFields(Stream.of(PlaceFields.values()).collect(toSet()))
+               .requestPollFields(Stream.of(PollFields.values()).collect(toSet()))
+               .requestTweetFields(Stream.of(TweetFields.values()).collect(toSet()))
+               .requestUserFields(Stream.of(UserFields.values()).collect(toSet()))
                .consume(tweet -> {
                    System.out.println(tweet);
                    var message = tweet.getData().getText().split("\\s+");
                    for (int i = 0; i < message.length; ++i) {
-                       if (message[i].compareToIgnoreCase("bolsonaro") == 0) {
+                       if (message[i].compareToIgnoreCase("java") == 0) {
                            if (i > 0 && message[i - 1].matches("[A-Za-z]{3,}?")) {
                                previousWords.compute(message[i - 1].toLowerCase(),
                                                      (word, counter) -> counter == null ? 1 : counter + 1);
