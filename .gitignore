@@ -1,5 +1,6 @@
 .classpath
 .settings
 .project
-run.sh
+*.sh
 target
+.vscode

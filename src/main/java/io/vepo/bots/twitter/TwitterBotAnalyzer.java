@@ -4,23 +4,26 @@ import static java.util.stream.Collectors.toSet;
 
 import java.util.HashMap;
 import java.util.Map.Entry;
-import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import io.vepo.twitter4j.Expansions;
+import io.vepo.twitter4j.MediaFields;
+import io.vepo.twitter4j.PlaceFields;
+import io.vepo.twitter4j.PollFields;
 import io.vepo.twitter4j.Rule;
 import io.vepo.twitter4j.Rule.Language;
+import io.vepo.twitter4j.TweetFields;
 import io.vepo.twitter4j.TwitterClient;
-import io.vepo.twitter4j.TwitterClient.Expansions;
-import io.vepo.twitter4j.TwitterClient.MediaFields;
-import io.vepo.twitter4j.TwitterClient.PlaceFields;
-import io.vepo.twitter4j.TwitterClient.PollFields;
-import io.vepo.twitter4j.TwitterClient.TweetFields;
-import io.vepo.twitter4j.TwitterClient.UserFields;
+import io.vepo.twitter4j.UserFields;
 
 public class TwitterBotAnalyzer {
+    private static final Logger logger = LoggerFactory.getLogger(TwitterBotAnalyzer.class);
     public static void main(String[] args) throws Exception {
-        TwitterClient tClient = new TwitterClient(System.getenv("API_KEY"),
-                                                  System.getenv("API_SECRET_KEY"));
+        TwitterClient tClient = TwitterClient.newClient(System.getenv("API_KEY"),
+                                                        System.getenv("API_SECRET_KEY"));
 
         var previousWords = new HashMap<String, Integer>();
         var nextsWords = new HashMap<String, Integer>();
@@ -28,7 +31,6 @@ public class TwitterBotAnalyzer {
                .stream()
                .withRule(Rule.builder()
                              .withLanguage(Language.Portuguese)
-//                         .withToken("java")
                              .withToken("bolsonaro")
                              .withLinks()
                              .applyTag("Bolsonaro"))
@@ -39,7 +41,10 @@ public class TwitterBotAnalyzer {
                .requestTweetFields(Stream.of(TweetFields.values()).collect(toSet()))
                .requestUserFields(Stream.of(UserFields.values()).collect(toSet()))
                .consume(tweet -> {
-                   System.out.println(tweet);
+                   logger.info("Tweet received: {}", tweet);
+                   tClient.reply(tweet.getData().getId(), "Oi", resp-> {
+                       logger.info("Tweet replied: {}", resp);
+                   });
                    var message = tweet.getData().getText().split("\\s+");
                    for (int i = 0; i < message.length; ++i) {
                        if (message[i].compareToIgnoreCase("java") == 0) {
